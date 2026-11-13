@@ -13,6 +13,10 @@
 export const ICON_CDN =
   "https://oss.gstonegames.com/data_file/clocktower/web/icons/";
 
+// 「爪牙信息 / 恶魔信息」用的红拇指：图床上 evil.png 是小丑面具，不是拇指，
+// 这张界面素材放本地（和提示标记里的阵营拇指图同一份）
+import evilThumb from "../assets/evil.png";
+
 /** 图床上确实存在的占位图 */
 const CDN_ALTS = ["good", "evil", "outsider", "minion", "custom", "fabled", "bootlegger"];
 
@@ -33,7 +37,7 @@ export function roleIconUrl(role, opts = {}) {
   if (CDN_ALTS.indexOf(alt) >= 0) return ICON_CDN + alt + ".png";
   if (FALLBACK_TO_CUSTOM.indexOf(alt) >= 0) return ICON_CDN + "custom.png";
   // 夜序里的「爪牙信息 / 恶魔信息」是伪角色（id = evil，没有 image / imageAlt），
-  // 源码时代靠本地 evil.png 显示红拇指；改图床后在这里补同款
-  if (!alt && r.id === "evil") return ICON_CDN + "evil.png";
+  // 源码时代靠本地 evil.png（红拇指）显示，这里用同一张本地图
+  if (!alt && r.id === "evil") return evilThumb;
   return "";
 }

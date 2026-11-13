@@ -199,11 +199,10 @@ import {
   slotLabel,
   ALIGN_LABEL
 } from "../../logic/phrases";
-import { ICON_CDN } from "../../logic/roleIcon";
-
-// 善良/邪恶的拇指图：本地不内置图标，直接走歌石图床（和角色图标同一个源）
-const goodIcon = ICON_CDN + "good.png";
-const evilIcon = ICON_CDN + "evil.png";
+// 善良/邪恶的拇指图：图床上同名文件是小丑面具、不是拇指，
+// 所以这两张界面素材放本地随构建打包
+import goodIcon from "../../assets/good.png";
+import evilIcon from "../../assets/evil.png";
 
 export default {
   name: "QuickWakeModal",

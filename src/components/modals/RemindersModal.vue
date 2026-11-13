@@ -106,12 +106,21 @@ import {
 /** 一个座位最多挂多少个提示标记（和参考魔典一致） */
 const MAX_REMINDERS = 20;
 
-// 通用标记「善良 / 邪恶」的图标：源码是 require(`assets/icons/${role}.png`)，
-// 现在本地不内置图标，这几张通用图直接走歌石图床
-const iconOf = id =>
-  ["good", "evil", "outsider", "minion"].indexOf(id) >= 0
-    ? `https://oss.gstonegames.com/data_file/clocktower/web/icons/${id}.png`
-    : "";
+// 通用标记「善良 / 邪恶 / 外来者 / 爪牙」的阵营拇指图：
+// 源码是 require(`assets/icons/${role}.png`)，这四张是界面素材（拇指标志），
+// 图床上对应文件是小丑面具、不是拇指，所以留在本地随构建打包
+import goodIcon from "../../assets/good.png";
+import evilIcon from "../../assets/evil.png";
+import outsiderIcon from "../../assets/outsider.png";
+import minionIcon from "../../assets/minion.png";
+
+const GENERIC_ICONS = {
+  good: goodIcon,
+  evil: evilIcon,
+  outsider: outsiderIcon,
+  minion: minionIcon
+};
+const iconOf = id => GENERIC_ICONS[id] || "";
 
 export default {
   name: "RemindersModal",
