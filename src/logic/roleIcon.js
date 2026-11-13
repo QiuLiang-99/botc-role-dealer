@@ -32,5 +32,8 @@ export function roleIconUrl(role, opts = {}) {
   const alt = String(r.imageAlt || "");
   if (CDN_ALTS.indexOf(alt) >= 0) return ICON_CDN + alt + ".png";
   if (FALLBACK_TO_CUSTOM.indexOf(alt) >= 0) return ICON_CDN + "custom.png";
+  // 夜序里的「爪牙信息 / 恶魔信息」是伪角色（id = evil，没有 image / imageAlt），
+  // 源码时代靠本地 evil.png 显示红拇指；改图床后在这里补同款
+  if (!alt && r.id === "evil") return ICON_CDN + "evil.png";
   return "";
 }
