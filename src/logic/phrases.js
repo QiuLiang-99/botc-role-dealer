@@ -12,9 +12,15 @@
  */
 export const QUICK_PHRASES = [
   {
+    // 座位号可选：不选就是「这名玩家是…」，选了就是「这名5号玩家是…」
     key: "player-is-role",
-    seg: ["这名玩家是", { role: "r1" }],
-    slots: [{ key: "r1", type: "role" }]
+    seg: ["这名", { seat: "s1" }, "是", { role: "r1" }],
+    slots: [
+      { key: "s1", type: "seat", optional: true },
+      { key: "r1", type: "role" }
+    ],
+    // 打开时默认进角色选择（座位号是可选的附加信息）
+    firstSlot: "r1"
   },
   {
     key: "roles-not-in-play",
@@ -46,21 +52,26 @@ export const QUICK_PHRASES = [
     slots: []
   },
   {
-    // 原来第 6、7 条（你是…的… / 你是…的）合并成一条：
-    // 角色空位可留空 —— 填了就是「你是善良的占卜师」，留空就是「你是善良的」
+    // 原来第 6、7 条（你是…的… / 你是…的）合并成一条。
+    // 阵营、角色两格都可留空，说书人填任意一格或两格都行：
+    //   两格 → 你是善良的占卜师 ／ 只填阵营 → 你是善良的 ／ 只填角色 → 你是占卜师
+    // 「的」挂在阵营空位上（suffix），阵营没填时不会出现「你是的占卜师」
     key: "you-are-align",
-    seg: ["你是", { align: "a1" }, "的", { role: "r1" }],
+    seg: ["你是", { align: "a1", suffix: "的" }, { role: "r1" }],
     slots: [
-      { key: "a1", type: "align" },
+      { key: "a1", type: "align", optional: true },
       { key: "r1", type: "role", optional: true }
     ],
-    // 打开填空窗口时先选角色（可选），只报阵营的话留空直接展示即可
+    // 两格都可不填，但至少要填一格才能展示
+    minFilled: 1,
+    // 打开填空窗口时先选角色
     firstSlot: "r1"
   },
   {
+    // 数字默认 1（打开就是「选择1名玩家」，不改直接展示）
     key: "choose-n",
     seg: ["选择", { num: "n1" }, "名玩家"],
-    slots: [{ key: "n1", type: "num" }]
+    slots: [{ key: "n1", type: "num", default: 1 }]
   },
   {
     key: "make-choice",
@@ -74,15 +85,19 @@ export function isSlot(seg) {
   return !!seg && typeof seg === "object";
 }
 
-/** 空位属于哪一类（role / align / num） */
+/** 空位属于哪一类（role / align / num / seat） */
 export function slotType(seg) {
   if (!isSlot(seg)) return "";
-  return seg.role ? "role" : seg.align ? "align" : seg.num ? "num" : "";
+  if (seg.role) return "role";
+  if (seg.align) return "align";
+  if (seg.num) return "num";
+  if (seg.seat) return "seat";
+  return "";
 }
 
 /** 空位的键名，用来在 picked 里查值 */
 export function slotKey(seg) {
-  return seg.role || seg.align || seg.num || "";
+  return seg.role || seg.align || seg.num || seg.seat || "";
 }
 
 /** 按 key 找空位定义（含 optional 标记） */
@@ -95,6 +110,8 @@ export function slotLabel(type) {
   if (type === "role") return "角色";
   if (type === "align") return "善良 / 邪恶";
   if (type === "num") return "数字";
+  // 座位号没选时这句话读作「这名玩家是…」
+  if (type === "seat") return "玩家";
   return "?";
 }
 

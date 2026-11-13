@@ -35,13 +35,16 @@
               </span>
               <span class="qw-chip-align" v-else-if="slotType(seg) === 'align' && picked[slotKey(seg)]" :class="picked[slotKey(seg)]">
                 <img :src="picked[slotKey(seg)] === 'good' ? goodIcon : evilIcon" alt="" />
-                {{ ALIGN_LABEL[picked[slotKey(seg)]] }}
+                {{ ALIGN_LABEL[picked[slotKey(seg)]] }}{{ seg.suffix || "" }}
               </span>
               <span class="qw-chip-num" v-else-if="slotType(seg) === 'num' && picked[slotKey(seg)]">
                 {{ picked[slotKey(seg)] }}
               </span>
               <span class="qw-chip-name" v-if="slotType(seg) === 'role'">
                 {{ picked[slotKey(seg)] ? picked[slotKey(seg)].name : "点选角色" }}
+              </span>
+              <span class="qw-chip-name" v-else-if="slotType(seg) === 'seat'">
+                {{ picked[slotKey(seg)] ? picked[slotKey(seg)] + "号玩家" : "玩家" }}
               </span>
               <span class="qw-chip-name" v-else-if="!picked[slotKey(seg)]">
                 {{ slotLabel(slotType(seg)) }}
@@ -131,6 +134,27 @@
               {{ n }}
             </button>
           </div>
+
+          <!-- 座位号：1–当前魔典最大座位号 -->
+          <div class="qw-nums" v-else-if="activeType === 'seat'">
+            <button
+              v-for="n in maxSeat"
+              :key="'seat' + n"
+              class="qw-num"
+              :class="{ on: picked[active] === n }"
+              @click="pickNum(n)"
+            >
+              {{ n }}
+            </button>
+          </div>
+
+          <!-- 可选格子（绿色）：随时可以把这一格清空 -->
+          <div class="qw-slot-clear" v-if="activeOptional">
+            <button class="qw-clear-btn" @click="clearActive">
+              <font-awesome-icon icon="eraser" /> 这一格留空
+            </button>
+            <span class="qw-clear-tip">绿色边框的格子都可以不填</span>
+          </div>
         </div>
 
         <!-- 没有空位的短语（是否使用你的能力 / 做出你的选择）直接展示 -->
@@ -170,7 +194,7 @@
               :class="picked[slotKey(seg)]"
             >
               <img :src="picked[slotKey(seg)] === 'good' ? goodIcon : evilIcon" alt="" />
-              {{ ALIGN_LABEL[picked[slotKey(seg)]] }}
+              {{ ALIGN_LABEL[picked[slotKey(seg)]] }}{{ seg.suffix || "" }}
             </span>
             <span
               class="qws-num"
@@ -178,6 +202,13 @@
               v-else-if="slotType(seg) === 'num' && picked[slotKey(seg)]"
             >
               {{ picked[slotKey(seg)] }}
+            </span>
+            <span
+              class="qws-seat"
+              :key="'ss' + i"
+              v-else-if="slotType(seg) === 'seat' && picked[slotKey(seg)]"
+            >
+              {{ picked[slotKey(seg)] }}号玩家
             </span>
           </template>
         </div>
@@ -204,6 +235,15 @@ import {
 import goodIcon from "../../assets/good.png";
 import evilIcon from "../../assets/evil.png";
 
+/** 打开短语时按 slots 里的 default 预填（「选择N名玩家」默认就是 1） */
+function defaultPicked(phrase) {
+  const picked = {};
+  ((phrase && phrase.slots) || []).forEach(slot => {
+    if (slot.default !== undefined) picked[slot.key] = slot.default;
+  });
+  return picked;
+}
+
 export default {
   name: "QuickWakeModal",
   components: { Modal, Token },
@@ -213,7 +253,7 @@ export default {
   },
   data() {
     return {
-      picked: {},
+      picked: defaultPicked(this.phrase),
       active: "",
       search: "",
       team: "all",
@@ -253,9 +293,24 @@ export default {
     filledCount() {
       return Object.keys(this.picked).filter(key => this.picked[key]).length;
     },
-    /** 必填的空位都填上才能展示 */
+    /** 座位号的可选范围：1–当前魔典最大座位号 */
+    maxSeat() {
+      return Math.max((this.players || []).length, 1);
+    },
+    /** 当前这一格是不是「可留空」（绿色边框） */
+    activeOptional() {
+      const def = slotDef(this.phrase, this.active);
+      return !!(def && def.optional);
+    },
+    /**
+     * 必填的空位都填上才能展示；
+     * minFilled 表示「几格都可不填，但至少得填几格」（「你是…的…」是 1）
+     */
     ready() {
-      return (this.phrase.slots || []).every(slot => slot.optional || !!this.picked[slot.key]);
+      const slots = this.phrase.slots || [];
+      if (slots.some(slot => !slot.optional && !this.picked[slot.key])) return false;
+      const min = Number(this.phrase.minFilled) || 0;
+      return this.filledCount >= min;
     }
   },
   created() {
@@ -303,9 +358,14 @@ export default {
       this.$set(this.picked, this.active, n);
       this.active = this.firstEmpty();
     },
+    /** 把当前这一格清空（只对可留空的格子显示入口） */
+    clearActive() {
+      if (!this.active) return;
+      this.$delete(this.picked, this.active);
+    },
     reset() {
-      this.picked = {};
-      this.active = this.firstEmpty();
+      this.picked = defaultPicked(this.phrase);
+      this.active = this.phrase.firstSlot || this.firstEmpty();
     },
     show() {
       if (!this.ready) return;
@@ -388,6 +448,27 @@ export default {
     border-color: #ffce8a;
     background: rgba(255, 206, 138, 0.09);
     box-shadow: 0 0 0 1px rgba(255, 206, 138, 0.35);
+  }
+  /* 可留空的格子统一走绿色，和必填的黄色区分开 */
+  &.optional {
+    border-color: rgba(126, 205, 145, 0.5);
+    color: #a6ddb2;
+    .qw-chip-name {
+      color: #a6ddb2;
+    }
+    &.filled {
+      border-style: solid;
+      border-color: rgba(126, 205, 145, 0.72);
+    }
+    &.active {
+      border-color: #8ee7a6;
+      background: rgba(126, 205, 145, 0.12);
+      box-shadow: 0 0 0 1px rgba(126, 205, 145, 0.38);
+    }
+    .qw-chip-opt {
+      border-color: rgba(126, 205, 145, 0.5);
+      color: #a6ddb2;
+    }
   }
 }
 .qw-chip-token {
@@ -595,7 +676,7 @@ export default {
 }
 .qw-align-btn {
   width: 150px;
-  padding: 22px 0;
+  padding: 18px 0;
   border-radius: 14px;
   border: 1px solid rgba(255, 255, 255, 0.16);
   background: rgba(255, 255, 255, 0.03);
@@ -605,14 +686,17 @@ export default {
   letter-spacing: 6px;
   cursor: pointer;
   transition: all 160ms;
+  /* 拇指图和文字横着排（原来是上下叠） */
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
+  justify-content: center;
   gap: 12px;
   .qw-align-thumb {
-    width: 58px;
-    height: 58px;
+    width: 52px;
+    height: 52px;
     display: block;
+    flex: none;
   }
   &.good:hover,
   &.good.on {
@@ -667,6 +751,36 @@ export default {
   margin: 0;
   font-size: 0.72em;
   color: #8c8c8c;
+}
+
+/* 可选格子的「留空」入口 */
+.qw-slot-clear {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 2px 2px;
+}
+.qw-clear-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(126, 205, 145, 0.55);
+  background: rgba(126, 205, 145, 0.08);
+  color: #a6ddb2;
+  font-family: inherit;
+  font-size: 0.66em;
+  cursor: pointer;
+  &:hover {
+    color: #d7f5de;
+    border-color: #8ee7a6;
+  }
+}
+.qw-clear-tip {
+  font-size: 0.6em;
+  color: #6f8f77;
 }
 
 .qw-actions {
@@ -751,15 +865,17 @@ export default {
 }
 .qws-align {
   display: flex;
-  flex-direction: column;
+  /* 拇指图和「善良 / 邪恶」横着排（原来是上下叠） */
+  flex-direction: row;
   align-items: center;
-  gap: 14px;
+  gap: clamp(10px, 1.8vmin, 22px);
   font-size: clamp(30px, 7vmin, 76px);
   letter-spacing: 10px;
   img {
-    width: clamp(56px, 12vmin, 130px);
-    height: clamp(56px, 12vmin, 130px);
+    width: clamp(46px, 9vmin, 104px);
+    height: clamp(46px, 9vmin, 104px);
     display: block;
+    flex: none;
     filter: drop-shadow(0 0 18px rgba(255, 255, 255, 0.25));
   }
   &.good {
@@ -781,6 +897,12 @@ export default {
   border: 2px solid rgba(255, 206, 138, 0.7);
   color: #ffce8a;
   font-size: clamp(24px, 4.4vmin, 44px);
+}
+.qws-seat {
+  font-size: clamp(24px, 5.2vmin, 58px);
+  letter-spacing: 7px;
+  color: #ffce8a;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.8);
 }
 .qws-hint {
   margin: 0;

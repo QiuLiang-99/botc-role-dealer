@@ -798,7 +798,7 @@
                         :key="'qp-slot-' + j"
                         class="qp-slot"
                         :class="slotType(seg)"
-                        >{{ slotLabel(slotType(seg)) }}</em
+                        >{{ slotLabel(slotType(seg)) + (seg.suffix || "") }}</em
                       >
                     </template>
                   </span>
