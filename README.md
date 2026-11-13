@@ -4,6 +4,8 @@
 
 **技术栈**：Vue 2.7 + Vuex + Vite + SCSS
 
+**在线体验**：https://botc-role-dealer.app.workbuddy.host/?sharecode=WZOZMRMUW2
+
 ## 特性
 
 - **自定义剧本**：上传剧本 json（角色自带名称 / 能力 / 夜序 / 图片链接），不内置官方剧本数据；角色图片走远程图床，本地零图片依赖

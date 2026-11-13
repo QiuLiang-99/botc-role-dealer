@@ -410,7 +410,7 @@
               <!-- 遮罩模式：把牌面换成「?」，屏幕转给玩家看时不会泄漏身份。
                    说书人临时要看某个人的身份/token：点一下亮出牌面和标记，再点一下盖回去 -->
               <div
-                v-else-if="revealedSeat === index"
+                v-else-if="revealedSeats.includes(index)"
                 class="reveal-face"
                 title="点击盖回遮罩"
                 @click.stop="toggleReveal(index)"
@@ -568,7 +568,7 @@
               </div>
             </template>
             <!-- 遮罩模式下点开的那一个座位：标记只展示，不给操作（玩家视角不能改魔典） -->
-            <template v-else-if="revealedSeat === index">
+            <template v-else-if="revealedSeats.includes(index)">
               <div
                 class="reminder"
                 v-for="item in reminderChips(player)"
@@ -1043,8 +1043,9 @@ export default {
       bluffPreview: false,
       // 遮罩：把角色牌换成「?」，方便把屏幕转给玩家看
       playerView: false,
-      // 遮罩模式下被点开的座位（-1 = 没有亮牌）。一次只亮一个，再点一下盖回去
-      revealedSeat: -1,
+      // 遮罩模式下被点开的座位列表。点「?」亮牌，再点同一个盖回去，
+      // 可以同时亮多个（一个一个给玩家看牌）
+      revealedSeats: [],
       night: 1,
       isNight: true,
       history: [],
@@ -1902,7 +1903,7 @@ export default {
     togglePlayerView() {
       this.playerView = !this.playerView;
       // 开关遮罩都要把亮牌收掉，回到全遮的状态
-      this.revealedSeat = -1;
+      this.revealedSeats = [];
       this.swapIndex = -1;
       this.moveIndex = -1;
       if (this.playerView) {
@@ -1918,10 +1919,15 @@ export default {
         this.notify("已恢复显示角色牌。", "ok");
       }
     },
-    /** 遮罩模式下点「?」：亮出这个座位的牌面和标记；再点一下（或点别的座位）盖回去 */
+    /** 遮罩模式下点「?」：亮出这个座位的牌面和标记；再点一下盖回去。多个座位可同时亮着 */
     toggleReveal(index) {
       if (!this.playerView) return;
-      this.revealedSeat = this.revealedSeat === index ? -1 : index;
+      const i = this.revealedSeats.indexOf(index);
+      if (i > -1) {
+        this.revealedSeats.splice(i, 1);
+      } else {
+        this.revealedSeats.push(index);
+      }
     },
     showBluffPreview() {
       this.bluffsOpen = false;
