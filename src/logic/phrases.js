@@ -46,17 +46,16 @@ export const QUICK_PHRASES = [
     slots: []
   },
   {
-    key: "you-are-align-role",
+    // 原来第 6、7 条（你是…的… / 你是…的）合并成一条：
+    // 角色空位可留空 —— 填了就是「你是善良的占卜师」，留空就是「你是善良的」
+    key: "you-are-align",
     seg: ["你是", { align: "a1" }, "的", { role: "r1" }],
     slots: [
       { key: "a1", type: "align" },
-      { key: "r1", type: "role" }
-    ]
-  },
-  {
-    key: "you-are-align",
-    seg: ["你是", { align: "a1" }, "的"],
-    slots: [{ key: "a1", type: "align" }]
+      { key: "r1", type: "role", optional: true }
+    ],
+    // 打开填空窗口时先选角色（可选），只报阵营的话留空直接展示即可
+    firstSlot: "r1"
   },
   {
     key: "choose-n",

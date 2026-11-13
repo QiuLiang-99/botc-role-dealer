@@ -259,7 +259,8 @@ export default {
     }
   },
   created() {
-    this.active = this.firstEmpty();
+    // 短语可以指定「先填哪个空」（如「你是…的…」先选角色，阵营可后补）
+    this.active = this.phrase.firstSlot || this.firstEmpty();
   },
   methods: {
     isSlot,
