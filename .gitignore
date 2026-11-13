@@ -17,3 +17,7 @@ desktop.ini
 *.local
 .env
 .env.*
+
+# 本机临时验证脚本 / 截图：只用来本地跑 puppeteer，不随仓库推送
+dev-verify/
+shot-*.png
