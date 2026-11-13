@@ -1,0 +1,19 @@
+# 依赖：npm install 可随时还原，不入库
+node_modules/
+
+# 构建输出：npx vite build 随时可重新生成，不入库
+dist/
+
+# 编辑器 / 系统垃圾
+.DS_Store
+Thumbs.db
+desktop.ini
+*.swp
+.idea/
+.vscode/
+
+# 本地环境与日志
+*.log
+*.local
+.env
+.env.*

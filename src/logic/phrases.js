@@ -1,0 +1,103 @@
+/**
+ * 快捷唤醒短语。
+ *
+ * 一条短语由 `seg` 描述：字符串是固定文字，对象是「说书人现场要填的空」。
+ * 空位的类型只有三种，展示时各自渲染成不同样子：
+ *   role  → 一张角色牌（圆牌 + 名字）
+ *   align → 善良 / 邪恶 两个大字（善良蓝、邪恶红）
+ *   num   → 一个圈起来的数字
+ *
+ * `optional: true` 表示这一格可以不填，留空时整段话照样成立
+ *（「对你生效」的第二个角色就是可选的）。
+ */
+export const QUICK_PHRASES = [
+  {
+    key: "player-is-role",
+    seg: ["这名玩家是", { role: "r1" }],
+    slots: [{ key: "r1", type: "role" }]
+  },
+  {
+    key: "roles-not-in-play",
+    seg: ["这些角色不在场", { role: "r1" }, { role: "r2" }, { role: "r3" }],
+    slots: [
+      { key: "r1", type: "role" },
+      { key: "r2", type: "role" },
+      { key: "r3", type: "role" }
+    ],
+    // 这句话本来就是给「不在场」的角色用的，候选默认只看没上场的
+    onlyUnused: true
+  },
+  {
+    key: "this-role",
+    seg: [{ role: "r1" }],
+    slots: [{ key: "r1", type: "role" }]
+  },
+  {
+    key: "affects-you",
+    seg: ["对你生效", { role: "r1" }, { role: "r2" }],
+    slots: [
+      { key: "r1", type: "role" },
+      { key: "r2", type: "role", optional: true }
+    ]
+  },
+  {
+    key: "use-ability",
+    seg: ["是否使用你的能力"],
+    slots: []
+  },
+  {
+    key: "you-are-align-role",
+    seg: ["你是", { align: "a1" }, "的", { role: "r1" }],
+    slots: [
+      { key: "a1", type: "align" },
+      { key: "r1", type: "role" }
+    ]
+  },
+  {
+    key: "you-are-align",
+    seg: ["你是", { align: "a1" }, "的"],
+    slots: [{ key: "a1", type: "align" }]
+  },
+  {
+    key: "choose-n",
+    seg: ["选择", { num: "n1" }, "名玩家"],
+    slots: [{ key: "n1", type: "num" }]
+  },
+  {
+    key: "make-choice",
+    seg: ["做出你的选择"],
+    slots: []
+  }
+];
+
+/** 一个 seg 是不是空位 */
+export function isSlot(seg) {
+  return !!seg && typeof seg === "object";
+}
+
+/** 空位属于哪一类（role / align / num） */
+export function slotType(seg) {
+  if (!isSlot(seg)) return "";
+  return seg.role ? "role" : seg.align ? "align" : seg.num ? "num" : "";
+}
+
+/** 空位的键名，用来在 picked 里查值 */
+export function slotKey(seg) {
+  return seg.role || seg.align || seg.num || "";
+}
+
+/** 按 key 找空位定义（含 optional 标记） */
+export function slotDef(phrase, key) {
+  return (phrase.slots || []).find(item => item.key === key) || null;
+}
+
+/** 列表里给空位画小标签用的文字 */
+export function slotLabel(type) {
+  if (type === "role") return "角色";
+  if (type === "align") return "善良 / 邪恶";
+  if (type === "num") return "数字";
+  return "?";
+}
+
+export const ALIGN_LABEL = { good: "善良", evil: "邪恶" };
+export const ALIGN_TEAM = { good: "townsfolk", evil: "minion" };
