@@ -797,7 +797,7 @@
                         v-else
                         :key="'qp-slot-' + j"
                         class="qp-slot"
-                        :class="slotType(seg)"
+                        :class="['t-' + slotType(seg), { optional: slotIsOptional(item, seg) }]"
                         >{{ slotLabel(slotType(seg)) + (seg.suffix || "") }}</em
                       >
                     </template>
@@ -953,7 +953,7 @@ import CloudModal from "./components/modals/CloudModal";
 import QuickWakeModal from "./components/modals/QuickWakeModal";
 import { snapSeats, nightOrderOf, isDeathMark } from "./logic/grimoire";
 import { sweepRoleReminders, describeRemoved } from "./logic/reminders";
-import { QUICK_PHRASES, isSlot, slotType, slotLabel } from "./logic/phrases";
+import { QUICK_PHRASES, isSlot, slotType, slotLabel, slotDef, slotKey } from "./logic/phrases";
 import { cloudState, initCloud, refreshCloud } from "./cloud/state";
 import script from "./data/script.json";
 
@@ -2214,6 +2214,11 @@ export default {
     },
     slotLabel(type) {
       return slotLabel(type);
+    },
+    /** 列表里这个空位是不是「可留空」（绿色标记，和填空窗口里一致） */
+    slotIsOptional(phrase, seg) {
+      const def = slotDef(phrase, slotKey(seg));
+      return !!(def && def.optional);
     },
     /**
      * 清空标记：把全场所有座位上的提示标记（连同说书人自己那一份）清掉，
@@ -4093,13 +4098,27 @@ ul {
     font-size: 0.92em;
     letter-spacing: 1px;
     color: #ffce8a;
-    &.align {
+    /* 类名统一加 t- 前缀：裸的 .seat / .align 会和魔典那边的全局样式撞车 */
+    &.t-align {
       border-color: rgba(150, 180, 220, 0.5);
       background: rgba(120, 160, 210, 0.1);
       color: #a9c6e8;
     }
-    &.num {
+    &.t-num {
       border-color: rgba(200, 170, 120, 0.5);
+    }
+    /* 可留空的空位：和填空窗口里一样用绿色，别和必填的黄色混在一起 */
+    &.optional {
+      border-color: rgba(126, 205, 145, 0.55);
+      background: rgba(126, 205, 145, 0.1);
+      color: #a6ddb2;
+      &.t-align,
+      &.t-num,
+      &.t-seat {
+        border-color: rgba(126, 205, 145, 0.55);
+        background: rgba(126, 205, 145, 0.1);
+        color: #a6ddb2;
+      }
     }
   }
   .qp-go {

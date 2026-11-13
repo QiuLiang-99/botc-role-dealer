@@ -468,6 +468,7 @@ export default {
     .qw-chip-opt {
       border-color: rgba(126, 205, 145, 0.5);
       color: #a6ddb2;
+      background: #16241a;
     }
   }
 }
@@ -518,15 +519,17 @@ export default {
   white-space: nowrap;
 }
 .qw-chip-opt {
-  position: absolute;
-  right: -4px;
-  top: -8px;
-  padding: 0 4px;
+  /* 跟着格子走流式布局：格子宽度自动撑开，标签永远不会压住里面的文字 */
+  flex: none;
+  margin-left: 4px;
+  padding: 0 5px;
   border-radius: 6px;
   background: #2b2318;
   border: 1px solid rgba(201, 173, 126, 0.4);
-  font-size: 0.8em;
+  font-size: 0.72em;
+  line-height: 1.6;
   color: #c9a06a;
+  pointer-events: none;
 }
 
 /* 选择区 */
